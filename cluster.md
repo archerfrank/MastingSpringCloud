@@ -46,3 +46,11 @@ http://localhost:8081/ping
 - post to below to refresh
 
 http://localhost:8081/refresh
+
+## create rabbitmq
+
+docker pull rabbitmq:management
+
+docker run -d --name rabbit -p 5672:5672 -p 15672:15672 rabbitmq:management
+
+http://192.168.99.100:15672
