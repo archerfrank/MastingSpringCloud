@@ -73,3 +73,19 @@ X-GitHub-Event: push
 Content-Type: application/json
 
 {"commits": [{"modified": ["client-service-zone1.yml"]}]}
+
+## sample-spring-cloud-comm-feign
+mvn package -DskipTests
+
+```
+
+java -jar  discovery-service/target/discovery-service-1.0-SNAPSHOT.jar
+java -jar -Xmx192m  -Dspring.profiles.active=zone1 account-service/target/account-service-1.0-SNAPSHOT.jar
+java -jar -Xmx192m  -Dspring.profiles.active=zone1 -Dserver.port=18091 account-service/target/account-service-1.0-SNAPSHOT.jar
+java -jar -Xmx192m  -Dspring.profiles.active=zone1 customer-service/target/customer-service-1.0-SNAPSHOT.jar
+java -jar -Xmx192m  -Dspring.profiles.active=zone1 product-service/target/product-service-1.0-SNAPSHOT.jar
+java -jar -Xmx192m  -Dspring.profiles.active=zone1 order-service/target/order-service-1.0-SNAPSHOT.jar
+java -jar -Xmx192m  gateway-service/target/gateway-service-1.0-SNAPSHOT.jar
+```
+
+http://localhost:8092//withAccounts/1
