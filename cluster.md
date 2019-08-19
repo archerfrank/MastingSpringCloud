@@ -54,3 +54,22 @@ docker pull rabbitmq:management
 docker run -d --name rabbit -p 5672:5672 -p 15672:15672 rabbitmq:management
 
 http://192.168.99.100:15672
+
+docker stop rabbit
+docker start rabbit
+
+## sample-spring-cloud-config-bus-amqp
+
+```
+java -jar -Xmx384m sample-config-service/target/sample-config-service-1.0-SNAPSHOT.jar
+java -jar  -Dspring.profiles.active=zone1 sample-discovery-service/target/sample-discovery-service-1.0-SNAPSHOT.jar
+java -jar -Xmx192m -Dspring.profiles.active=zone1 sample-client-service/target/sample-client-service-1.0-SNAPSHOT.jar
+```
+
+update the git and post to 
+http://localhost:8889/monitor
+
+X-GitHub-Event: push
+Content-Type: application/json
+
+{"commits": [{"modified": ["client-service-zone1.yml"]}]}
