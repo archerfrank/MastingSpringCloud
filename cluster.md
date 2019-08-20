@@ -79,7 +79,7 @@ mvn package -DskipTests
 
 ```
 
-java -jar  discovery-service/target/discovery-service-1.0-SNAPSHOT.jar
+start java -jar  discovery-service/target/discovery-service-1.0-SNAPSHOT.jar
 java -jar -Xmx192m  -Dspring.profiles.active=zone1 account-service/target/account-service-1.0-SNAPSHOT.jar
 java -jar -Xmx192m  -Dspring.profiles.active=zone1 -Dserver.port=18091 account-service/target/account-service-1.0-SNAPSHOT.jar
 java -jar -Xmx192m  -Dspring.profiles.active=zone1 customer-service/target/customer-service-1.0-SNAPSHOT.jar
@@ -89,3 +89,26 @@ java -jar -Xmx192m  gateway-service/target/gateway-service-1.0-SNAPSHOT.jar
 ```
 
 http://localhost:8092//withAccounts/1
+
+import both projects order service and gateway service in the Eclipse.
+run the test case in both projects order service and gateway service.
+sample post {"id":null,"status":null,"price":0,"customerId":3,"accountId":null,"productIds":[5,7]}
+
+
+## sample-spring-cloud-comm-weighted-lb
+Import 4 projects into eclipse
+Run the test case in the customer service.
+you could change the the setting add one more 10091 and run test
+```
+listOfServers: account-service:8091, account-service:9091, account-service:10091
+```
+The result is TEST RESULT: 8091=34, 9091=39, 10091=27
+
+Modify the class *RibbonConfiguration*, change it from WeightedResponseTimeRule to AvailabilityFilteringRule or BestAvailableRule
+
+AvailabilityFilteringRule
+TEST RESULT: 8091=48, 9091=48, 10091=4
+
+BestAvailableRule
+TEST RESULT: 8091=100, 9091=0, 10091=0
+ 
