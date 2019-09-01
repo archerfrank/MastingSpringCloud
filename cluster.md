@@ -80,6 +80,8 @@ http://localhost:8889/monitor
 Content-Type: application/json
  {"commits": [{"modified": ["client-service-zone1.yml"]}]}
 
+ * Then the config service will put one event to the MQ and the clients will get the event and refresh the config.
+
 ## sample-spring-cloud-comm-feign
 
 mvn package -DskipTests
@@ -172,9 +174,7 @@ docker exec -it logstash ls /usr/share/logstash/pipeline
 http://localhost:8091/customer/1
 
 * Start customer and gateway service.
-
-http://localhost:8092/withAccounts/1
-http://localhost:8080/api/customer/withAccounts/1
+http://localhost:8080/api/customer/withAccounts/1. Then you could search traceID in the ELK.
 
 ## MQ with ELK
 1. Modify the produce service in sample-spring-cloud-comm-feign to use MQ
