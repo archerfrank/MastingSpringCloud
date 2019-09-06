@@ -202,5 +202,28 @@ docker run -d --name consul -p 8500:8500 consul
 
 ## MQ Services inter service call.
 
+* In the master repo
+    1. Start MQ
+    ```
+    docker run -d --name rabbit -p 5672:5672 -p 15672:15672 rabbitmq:management
+    docker start rabbit
+    docker stopt rabbit
+    ```
+
+    MQ address http://192.168.99.100:15672
+
+    2. Start product, account and order service, and run the test case in order service. 
+    3. add a listener function in the order application to read the output from account service.
+
+* In Pubsub repo.
+    1. check the application.xml, it support the consumer group and partition. Without partition, you don't know which one in the group will handle the message.
+    2. One message from order will be consumed by both account and product service.
+
+    3. Both service will send back the message to order.
+
+```
+-Dspring.profiles.active=zone1 
+```
+
  
 
