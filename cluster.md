@@ -225,5 +225,54 @@ docker run -d --name consul -p 8500:8500 consul
 -Dspring.profiles.active=zone1 
 ```
 
- 
+##  Docker
+
+1. Common command
+```
+docker rmi $(docker images -q -f dangling=true)   ----Remove all the dangling images.
+
+docker rm -f containerName
+
+mvn package -DskipTests
+
+docker build -t archerfrank/order-service:1.0 .
+docker build -t archerfrank/customer-service:1.0 .
+docker build -t archerfrank/account-service:1.0 .
+docker build -t archerfrank/product-service:1.0 .
+docker build -t archerfrank/discovery-service:1.0 .
+```
+
+2. To run the containers
+```
+docker network create sample-cloud
+
+docker run -d --rm --name account -p 8091:8091 -e EUREKA_DEFAULT_ZONE=http://discovery:8761/eureka -m 256M  --network sample-cloud archerfrank/account-service:1.0
+
+docker run -d --rm --name customer -p 8092:8092 -e EUREKA_DEFAULT_ZONE=http://discovery:8761/eureka -m 256M --network sample-cloud archerfrank/customer-service:1.0
+
+docker run -d --rm --name order -p 8090:8090 -e EUREKA_DEFAULT_ZONE=http://discovery:8761/eureka -m 256M --network sample-cloud archerfrank/order-service:1.0
+
+docker run -d --rm --name product -p 8093:8093 -e EUREKA_DEFAULT_ZONE=http://discovery:8761/eureka -m 256M --network sample-cloud archerfrank/product-service:1.0
+
+docker run -d --rm --name discovery -p 8761:8761 --network sample-cloud archerfrank/discovery-service:1.0
+```
+3. Visit http://192.168.99.100:8761
+
+ * Visit http://192.168.99.100:8092/withAccounts/1
+
+```
+docker stats --format "table {{.Name}}\t{{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}"
+```
+
+4. Build with Maven
+
+Go into each folder, you could run this command.
+
+```
+mvn clean install docker:build -DskipTests
+
+```
+
+# Jenkins
+
 
