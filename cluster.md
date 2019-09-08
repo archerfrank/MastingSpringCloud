@@ -240,6 +240,10 @@ docker build -t archerfrank/customer-service:1.0 .
 docker build -t archerfrank/account-service:1.0 .
 docker build -t archerfrank/product-service:1.0 .
 docker build -t archerfrank/discovery-service:1.0 .
+docker login --username=archerfrank
+docker push archerfrank/discovery-service:1.0
+docker push archerfrank/account-service:1.0
+docker push archerfrank/product-service:1.0
 ```
 
 2. To run the containers
@@ -275,4 +279,32 @@ mvn clean install docker:build -DskipTests
 
 # Jenkins
 
+
+# Kubernate
+
+1. install minikube https://yq.aliyun.com/articles/221687 or https://blog.csdn.net/yyqq188/article/details/88019467 
+```
+minikube start
+minikube start --registry-mirror=https://docker.mirrors.ustc.edu.cn
+minikube dashboard
+minikube ip
+minikube stop
+
+kubectl version
+kubectl get nodes
+kubectl cluster-info
+
+kubectl run discovery --image=archerfrank/discovery-service:1.0 --port=8761
+kubectl get pods -o wide
+kubectl logs discovery-56cc6f84f5-rfbdq
+kubectl exec discovery-56cc6f84f5-rfbdq date
+kubectl delete pod discovery-56cc6f84f5-rfbdq
+kubectl describe pod discovery-56cc6f84f5-rfbdq
+kubectl expose deployment discovery --type=NodePort
+
+kubectl apply -f discovery.yaml
+kubectl apply -f nodeport.yaml
+```
+
+2. Visit http://192.168.99.101:32000/ to find the discovery service.
 
