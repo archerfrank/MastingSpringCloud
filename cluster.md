@@ -293,10 +293,18 @@ minikube stop
 kubectl version
 kubectl get nodes
 kubectl cluster-info
+```
 
+2. Run the applications in the minikube.
+* Run single application
+```
 kubectl run discovery --image=archerfrank/discovery-service:1.0 --port=8761
 kubectl get pods -o wide
-kubectl logs discovery-56cc6f84f5-rfbdq
+```
+Useful command
+```
+kubectl get svc 
+kubectl logs account-service-6465c6dc6d-2qpjh
 kubectl exec discovery-56cc6f84f5-rfbdq date
 kubectl delete pod discovery-56cc6f84f5-rfbdq
 kubectl describe pod discovery-56cc6f84f5-rfbdq
@@ -304,6 +312,13 @@ kubectl expose deployment discovery --type=NodePort
 
 kubectl apply -f discovery.yaml
 kubectl apply -f nodeport.yaml
+kubectl apply -f product.yaml
+kubectl port-forward product-service 8090:8090
+
+kubectl delete deployment account-service
+docker pull archerfrank/product-service:1.0
+
+kubectl apply -f account.yaml
 ```
 
 2. Visit http://192.168.99.101:32000/ to find the discovery service.
