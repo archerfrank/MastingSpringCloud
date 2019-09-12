@@ -237,13 +237,14 @@ mvn package -DskipTests
 
 docker build -t archerfrank/order-service:1.0 .
 docker build -t archerfrank/customer-service:1.0 .
-docker build -t archerfrank/account-service:1.0 .
+docker build -t archerfrank/account-service:1.1 .
 docker build -t archerfrank/product-service:1.0 .
 docker build -t archerfrank/discovery-service:1.0 .
 docker login --username=archerfrank
 docker push archerfrank/discovery-service:1.0
-docker push archerfrank/account-service:1.0
+docker push archerfrank/account-service:1.1
 docker push archerfrank/product-service:1.0
+docker push archerfrank/customer-service:1.0
 ```
 
 2. To run the containers
@@ -304,8 +305,9 @@ kubectl get pods -o wide
 Useful command
 ```
 kubectl get svc 
-kubectl logs account-service-6465c6dc6d-2qpjh
-kubectl exec discovery-56cc6f84f5-rfbdq date
+kubectl logs account-service-6465c6dc6d-2597l
+kubectl logs customer-service-5f769dc486-slrb4
+kubectl exec customer-service-5f769dc486-slrb4 -c customer-service -- curl http://172.17.0.2:8091/customer/1
 kubectl delete pod discovery-56cc6f84f5-rfbdq
 kubectl describe pod discovery-56cc6f84f5-rfbdq
 kubectl expose deployment discovery --type=NodePort
@@ -313,13 +315,26 @@ kubectl expose deployment discovery --type=NodePort
 kubectl apply -f discovery.yaml
 kubectl apply -f nodeport.yaml
 kubectl apply -f product.yaml
-kubectl port-forward product-service 8090:8090
+kubectl apply -f account-service.yaml
+kubectl port-forward account-service-6465c6dc6d-2597l 8091:8091
+kubectl port-forward customer-service-5f769dc486-jxgj6 8092:8092
 
 kubectl delete deployment account-service
+kubectl delete pod customer-service-5f769dc486-slrb4
 docker pull archerfrank/product-service:1.0
+docker pull archerfrank/account-service:1.1      1.1 version is the preferIpAddress Version.
+
+curl http://10.100.247.206:8091/customer/1
+curl http://account-service:8091/customer/1
 
 kubectl apply -f account.yaml
+kubectl apply -f customer.yaml
 ```
 
 2. Visit http://192.168.99.101:32000/ to find the discovery service.
+3. After port forward, visit http://127.0.0.1:8091/1, http://127.0.0.1:8092/withAccounts/1 or we could create a nodeport service.
+```
+kubectl apply -f nodeport-customer.yaml
+```
+Then visit http://192.168.99.100:32001/withAccounts/1.
 

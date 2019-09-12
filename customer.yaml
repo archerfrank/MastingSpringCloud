@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: account-service
+  name: customer-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: account-service
+      app: customer-service
   template:
     metadata:
       labels:
-        app: account-service
+        app: customer-service
     spec:
       containers:
-      - name: account-service
-        image: archerfrank/account-service:1.1
+      - name: customer-service
+        image: archerfrank/customer-service:1.0
         env:
         - name: EUREKA_DEFAULT_ZONE
           value: http://discovery-service:8761/eureka
         ports:
-        - containerPort: 8091
+        - containerPort: 8092
           protocol: TCP
