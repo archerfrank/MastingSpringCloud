@@ -4,10 +4,10 @@ metadata:
   name: gateway-ingress
 spec:
   rules:
-  - host: 192.168.99.100
+  - host: archerfrank.com
     http:
       paths:
-      - path: /customer
+      - path: /
         backend:
           serviceName: customer-service
           servicePort: 8092

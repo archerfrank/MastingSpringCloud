@@ -284,57 +284,87 @@ mvn clean install docker:build -DskipTests
 # Kubernate
 
 1. install minikube https://yq.aliyun.com/articles/221687 or https://blog.csdn.net/yyqq188/article/details/88019467 
-```
-minikube start
-minikube start --registry-mirror=https://docker.mirrors.ustc.edu.cn
-minikube dashboard
-minikube ip
-minikube stop
 
-kubectl version
-kubectl get nodes
-kubectl cluster-info
-```
+* Start the minikube
+
+        ```
+        minikube start
+        minikube start --registry-mirror=https://docker.mirrors.ustc.edu.cn
+        minikube dashboard
+        minikube ip
+        minikube stop
+
+        kubectl version
+        kubectl get nodes
+        kubectl cluster-info
+        ```
 
 2. Run the applications in the minikube.
+
 * Run single application
-```
-kubectl run discovery --image=archerfrank/discovery-service:1.0 --port=8761
-kubectl get pods -o wide
-```
-Useful command
-```
-kubectl get svc 
-kubectl logs account-service-6465c6dc6d-2597l
-kubectl logs customer-service-5f769dc486-slrb4
-kubectl exec customer-service-5f769dc486-slrb4 -c customer-service -- curl http://172.17.0.2:8091/customer/1
-kubectl delete pod discovery-56cc6f84f5-rfbdq
-kubectl describe pod discovery-56cc6f84f5-rfbdq
-kubectl expose deployment discovery --type=NodePort
 
-kubectl apply -f discovery.yaml
-kubectl apply -f nodeport.yaml
-kubectl apply -f product.yaml
-kubectl apply -f account-service.yaml
-kubectl port-forward account-service-6465c6dc6d-2597l 8091:8091
-kubectl port-forward customer-service-5f769dc486-jxgj6 8092:8092
+    ```
+    kubectl run discovery --image=archerfrank/discovery-service:1.0 --port=8761
+    kubectl get pods -o wide
+    ```
+* Useful command
+    * create deployment to deploy account and customer and discovery.
+    * check the logs.
+    * pull the image, if it is to slow.
+    * Use IP to get the cloud service, instead of the DNS name.
 
-kubectl delete deployment account-service
-kubectl delete pod customer-service-5f769dc486-slrb4
-docker pull archerfrank/product-service:1.0
-docker pull archerfrank/account-service:1.1      1.1 version is the preferIpAddress Version.
+    ```
+    kubectl get svc 
+    kubectl logs account-service-6465c6dc6d-2597l
+    kubectl logs customer-service-5f769dc486-jxgj6
+    kubectl exec customer-service-5f769dc486-slrb4 -c customer-service -- curl http://172.17.0.2:8091/customer/1
+    kubectl delete pod discovery-56cc6f84f5-rfbdq
+    kubectl describe pod discovery-56cc6f84f5-rfbdq
+    kubectl expose deployment discovery --type=NodePort
 
-curl http://10.100.247.206:8091/customer/1
-curl http://account-service:8091/customer/1
+    kubectl apply -f discovery.yaml
+    kubectl apply -f nodeport.yaml
+    kubectl apply -f product.yaml
+    kubectl apply -f account-service.yaml
+    kubectl port-forward account-service-6465c6dc6d-2597l 8091:8091
+    kubectl port-forward customer-service-5f769dc486-jxgj6 8092:8092
 
-kubectl apply -f account.yaml
-kubectl apply -f customer.yaml
-```
+    kubectl delete deployment account-service
+    kubectl delete pod customer-service-5f769dc486-slrb4
+    docker pull archerfrank/product-service:1.0
+    docker pull archerfrank/account-service:1.1      1.1 version is the preferIpAddress Version.
 
-2. Visit http://192.168.99.101:32000/ to find the discovery service.
-3. After port forward, visit http://127.0.0.1:8091/1, http://127.0.0.1:8092/withAccounts/1 or we could create a nodeport service.
-```
-kubectl apply -f nodeport-customer.yaml
-```
+    curl http://10.100.247.206:8091/customer/1
+    curl http://account-service:8091/customer/1
+
+    kubectl apply -f account.yaml
+    kubectl apply -f customer.yaml
+    ```
+
+3. Visit http://192.168.99.101:32000/ to find the discovery service.
+
+4. After port forward, visit http://127.0.0.1:8091/1, http://127.0.0.1:8092/withAccounts/1 or we could create a nodeport service. **Caution**, the port forward is very slow.
+
+        ```
+        kubectl apply -f nodeport-customer.yaml
+        ```
 Then visit http://192.168.99.100:32001/withAccounts/1.
+
+5.  Use ingress servcie as gateway.
+
+    ```
+    kubectl get pods -o wide
+    kubectl get svc 
+    minikube addons list
+    minikube addons enable ingress
+    kubectl apply -f gateway.yaml
+    kubectl get endpoints
+    kubectl get ing
+    kubectl get pods -n kube-system
+
+    kubectl describe ing  gateway-ingress
+
+    ```
+    * Adjust the memory to 3.5 GB for the virtual machine and visit http://archerfrank.com/withAccounts/1. 
+
 
