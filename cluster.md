@@ -365,6 +365,8 @@ Then visit http://192.168.99.100:32001/withAccounts/1.
     kubectl describe ing  gateway-ingress
 
     ```
-    * Adjust the memory to 3.5 GB for the virtual machine and visit http://archerfrank.com/withAccounts/1. 
+    * Adjust the memory to 3.5 GB for the virtual machine and visit http://archerfrank.com/customer/withAccounts/1. 
+    
+    * Please also check https://github.com/kubernetes/ingress-nginx/blob/master/docs/examples/rewrite/README.md , the rewrite logic.
 
 
