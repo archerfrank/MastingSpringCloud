@@ -374,3 +374,313 @@ Then visit http://192.168.99.100:32001/withAccounts/1.
     * Please also check https://github.com/kubernetes/ingress-nginx/blob/master/docs/examples/rewrite/README.md , the rewrite logic.
 
 
+    ## sample-spring-boot-web
+Run the application, use the dev tool, which could hot load the changes without restart the application. 
+
+http://localhost:2222/person 
+http://localhost:2222/swagger-ui.html#/ 
+
+
+## sample-spring-cloud-netflix-master
+
+Start the server first.
+Check app at 
+http://localhost:8761/ 
+
+The start the client using cmd.
+
+```
+java -jar -DPORT=8083 target/sample-client-service-1.0-SNAPSHOT.jar
+java -jar -DPORT=8082 target/sample-client-service-1.0-SNAPSHOT.jar
+
+java -jar -DSEQUENCE_NO=2 target/sample-client-service-1.0-SNAPSHOT.jar
+java -jar -DSEQUENCE_NO=3 target/sample-client-service-1.0-SNAPSHOT.jar
+```
+we could use port or sequence no.
+POST to http://localhost:8083/shutdown 
+
+## sample-spring-cloud-netflix-cluster
+
+Start the server first.
+Check app at 
+http://localhost:8761/ 
+
+```
+java -jar -Xmx192m -Dspring.profiles.active=zone1 target/sample-client-service-1.0-SNAPSHOT.jar
+
+java -jar -Xmx192m -Dspring.profiles.active=zone2 target/sample-client-service-1.0-SNAPSHOT.jar
+
+java -jar -Xmx192m -Dspring.profiles.active=zone3 target/sample-client-service-1.0-SNAPSHOT.jar
+
+java -jar -Xmx192m -Dspring.profiles.active=peer1 target/sample-discovery-service-1.0-SNAPSHOT.jar
+
+java -jar -Xmx192m -Dspring.profiles.active=peer2 target/sample-discovery-service-1.0-SNAPSHOT.jar
+
+java -jar -Xmx192m -Dspring.profiles.active=peer3 target/sample-discovery-service-1.0-SNAPSHOT.jar
+
+java -jar -Xmx192m -Dspring.profiles.active=zone1 target/sample-gateway-service-1.0-SNAPSHOT.jar
+
+java -jar -Xmx192m -Dspring.profiles.active=zone2 target/sample-gateway-service-1.0-SNAPSHOT.jar
+
+java -jar -Xmx192m -Dspring.profiles.active=zone3 target/sample-gateway-service-1.0-SNAPSHOT.jar
+```
+
+localhost:8765/api/client/ping
+
+
+## sample-spring-cloud-comm-master
+
+```
+java -jar -Xmx384m account-service/target/account-service-1.0-SNAPSHOT.jar
+
+java -jar -Xmx384m customer-service/target/customer-service-1.0-SNAPSHOT.jar
+
+java -jar -Xmx384m product-service/target/product-service-1.0-SNAPSHOT.jar
+
+java -jar -Xmx384m order-service/target/order-service-1.0-SNAPSHOT.jar
+
+java -jar -Xmx384m gateway-service/target/gateway-service-1.0-SNAPSHOT.jar
+```
+
+* account service  http://localhost:8091/customer/1
+
+* customer-service http://localhost:8092/withAccounts/1
+
+* product-service http://localhost:8093/3
+
+* order-service http://localhost:8090/   only post
+
+* apigateway 
+    * http://localhost:8080/account/customer/1
+    * http://localhost:8080/customer/withAccounts/2
+    * http://localhost:8080/product/4
+    * http://localhost:8080/order/
+
+
+## sample-spring-cloud-comm-hystrix
+
+0. **spring-boot-starter-actuator** need to add to all the applicatons
+1. import the projects into the eclipse;
+2. Run the applications. The account server is config at both 8091 and 9091, but it only start at 8091. Product service only start at 8093
+    * account service  http://localhost:8091/customer/1
+
+    * customer-service http://localhost:8092/withAccounts/1
+
+    * product-service http://localhost:8093/3
+
+    * order-service http://localhost:8090/
+
+3. Run the costomer service test case, you could get if remote service fails, the data is from fallback. If the circuit breaker is open, the data is all from cache. 
+
+4. Use BestAvailableRule(Always use available client) or RoundRobinRule, the result is different
+
+5. Monitor the stream of the remote call. Start the Hystrix Dashboard with all other service. Visit http://localhost:9000/hystrix. Input the endpoint, for example http://localhost:8090/hystrix.stream. Run the order service test case, and we can see the result.
+
+
+## sample-spring-cloud-comm-turbine
+1. The same as before start all the applications including the service discovery.
+2. Check all the service at http://localhost:8761/
+3. start hystrix-dashboard, and check http://localhost:9000/turbine.stream
+4. add the http://localhost:9000/turbine.stream to the http://localhost:9000/hystrix
+5. run the test case in the order service and check the result. We can also terminate account service and see the change in the report.
+
+
+
+## GateWay
+1. start up all the service, and could check the routes http://localhost:8080/routes or http://localhost:8080/routes?format=details 
+
+```
+in application.yml
+management:
+  security:
+    enabled: false
+
+in pom.xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
+```
+
+2. http://localhost:8080/filters
+Filter is like the filter in the servlet, it could modify the request header or extra functions.
+
+
+## Log with Zipkin
+
+Use the project in Chapter 6 sample-spring-cloud-comm-feign.
+Below dependency is required to generate the traceID
+```
+<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-sleuth</artifactId>
+</dependency>
+```
+The zipkin service could register in the discovery service.
+
+1. start discovery 
+2. start zipkin and check url http://localhost:8761/ .
+3. start other applications, product, account, customer and order.
+4. visit http://localhost:9411/ to check the traces, please click the Find Traces button.
+5. you could see the depenencies and you could click them.
+6. sample is using the default port and address of zipkin, this could be reset by spring.zipkin.baseUrl in application XML.
+
+* Zipkin could be integrated by MQ as well. Client needs to use spring-cloud-starter-zipkin and amqp.
+
+## Security
+### sample-spring-cloud-security-master
+
+1. Create keystore for discovery and other applications.
+2. All other applications .cer files need to be imported into discovery.jks keystore.
+3. discovery.cer need to be imported into other applications. Below are some command to generate the keys.
+```
+keytool -genkey -alias order -storetype JKS -keyalg RSA -keysize 2048 -keystore order.jks -validity 3650
+You need to input the password.
+
+keytool -exportcert -alias order -keystore order.jks -file order.cer
+keytool -importcert -alias order -keystore discovery.jks -file order.cer
+keytool -importcert -alias discovery -keystore order.jks -file discovery.cer
+
+keytool -importkeystore -srckeystore discovery.jks -srcstoretype JKS -deststoretype PKCS12 -destkeystore discovery.p12
+
+keytool -export -alias discovery -file discovery.cer -keystore discovery.jks
+
+List all the keys
+keytool -v -list -keystore discovery.jks
+```
+4. Current setting is that the discovery service should verify all the applications, but applications don't verify each other requests.  JKS is keystore, which contains both public key of others and the private key of the application its own. If we add **_client-auth: need_** into the account application, then we can't using our browser to access the service. 
+
+5. To check https://localhost:8761/ and avoid the error, you have to create one new key to identify your browser. 
+
+```
+keytool -genkey -alias browser -storetype JKS -keyalg RSA -keysize 2048 -keystore browser.jks -validity 3650
+keytool -exportcert -alias browser -keystore browser.jks -file browser.cer
+keytool -importcert -alias browser -keystore discovery.jks -file browser.cer
+
+keytool -importkeystore -srckeystore browser.jks -srcstoretype JKS -deststoretype PKCS12 -destkeystore browser.p12
+```
+
+Import browser.cer into the discovery.jks, then the discovery service will trust this public key. Import browser.p12 to browser, this is the private key, because the service has trust the public key, so you could visit the https://localhost:8761/.
+
+6. To access the account application again, we need to import browser.cer into account.jks.
+
+```
+keytool -importcert -alias browser -keystore account.jks -file browser.cer
+```
+
+7. Refer to this article https://piotrminkowski.wordpress.com/2018/05/21/secure-discovery-with-spring-cloud-netflix-eureka/
+
+## Security Config
+### sample-spring-cloud-security-secureconfig
+1. After import the cer into discovery.jks in config-service, please visit https://localhost:8888/account-service.yml
+
+2. Use fiddler to post
+```
+https://localhost:8888/encrypt
+
+User-Agent: Fiddler
+Host: localhost:8888
+Content-Length: 6
+Content-Type: text/html; charset=utf-8
+
+Body
+123456
+
+This is to use the discovery public key to encrypt.
+encrypt:
+  keyStore:
+    location: classpath:/discovery.jks
+    password: 123456
+    alias: discovery
+    secret: 123456
+```
+https://localhost:8888/decrypt
+
+3. put the discovery.jks in account resource and use below to decrypt the cipher. Need to add them into VM arguement
+
+```
+-Dencrypt.keyStore.location=classpath:/discovery.jks -Dencrypt.keyStore.password=123456 -Dencrypt.keyStore.alias=discovery -Dencrypt.keyStore.secret=123456
+```
+
+## OAuth2
+
+```
+security:
+  basic:
+    enabled: false
+  oauth2:
+    client:
+      clientId: piotr.minkowski
+      clientSecret: 123456
+      accessTokenUri: http://localhost:8088/oauth/token
+      userAuthorizationUri: http://localhost:8088/oauth/authorize
+    resource:
+      userInfoUri: http://localhost:8088/user
+```
+
+1. Start both auth service and account service
+2. Visit http://localhost:8091/customer/1 
+3. You need to input user name and password.
+http://localhost:9999/oauth/authorize?response_type=token&client_id=piotr.minkowski&redirect_uri=http://abc.com&scope=read
+
+4. Start TCP monitor in eclipse to mapping 8088 to 9999, then to check the request from account service to auth service.
+    - visit http://localhost:8091/customer/1 should redirect to the _/login_, then to auth service _/oauth/authorize_
+    ```
+    http://localhost:8088/oauth/authorize?client_id=piotr.minkowski&redirect_uri=http://localhost:8091/login&response_type=code&state=h6EzzJ
+    ```
+    - with the code from auth service, the browser redirect to the account login url. The state is the link to the original url.
+    ```
+    http://localhost:8091/login?code=nZKlKG&state=h6EzzJ
+    ```
+    - After login the account app should verfiy the code with auth using /oauth/token with the code nZKlKG 
+    - If the code is correct, account service then request resource by /user to get the user information.
+
+## SSO with Gateway
+
+1. Don't use account service, please start product, discovery, gateway and auth service
+
+2. Make sure gateway and product can registed in discovery. 
+
+3. The Gateway main function add, this is required to connect to discovery.
+
+```
+	@Bean
+	public DiscoveryClient.DiscoveryClientOptionalArgs discoveryClientOptionalArgs() throws NoSuchAlgorithmException {
+		DiscoveryClient.DiscoveryClientOptionalArgs args = new DiscoveryClient.DiscoveryClientOptionalArgs();
+		System.setProperty("javax.net.ssl.keyStore", "src/main/resources/account.jks");
+		System.setProperty("javax.net.ssl.keyStorePassword", "123456");
+		System.setProperty("javax.net.ssl.trustStore", "src/main/resources/account.jks");
+		System.setProperty("javax.net.ssl.trustStorePassword", "123456");
+		EurekaJerseyClientBuilder builder = new EurekaJerseyClientBuilder();
+		builder.withClientName("account-client");
+		builder.withSystemSSLConfiguration();
+		builder.withMaxTotalConnections(10);
+		builder.withMaxConnectionsPerHost(10);
+		args.setEurekaJerseyClient(builder.build());
+		return args;
+	}
+```
+
+4. Start TCP monitor 8088->9999, and comments out some uncessary security code in product configration file. Only use **@EnableResourceServer** in the product service. Only _userInfoUri_ should config in the application.xml
+```
+security:
+  user:
+    name: piotr.minkowski
+    password: 123456
+  oauth2:
+    resource:
+#      loadBalanced: true
+      userInfoUri: http://localhost:8088/user
+```
+
+5. Test with below URL.
+http://localhost:8093/3
+http://localhost:8080/api/product/1
+
+6. Reference https://github.com/piomin/sample-spring-oauth2-microservices/tree/advanced 
+
+
+
+
+
+
