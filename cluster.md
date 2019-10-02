@@ -204,5 +204,173 @@ http://192.168.99.100:8500
 1. use the repo sample-spring-cloud-consul-master
 
 
- 
+## MQ Services inter service call.
+
+* In the master repo
+    1. Start MQ
+    ```
+    docker run -d --name rabbit -p 5672:5672 -p 15672:15672 rabbitmq:management
+    docker start rabbit
+    docker stopt rabbit
+    ```
+
+    MQ address http://192.168.99.100:15672
+
+    2. Start product, account and order service, and run the test case in order service. 
+    3. add a listener function in the order application to read the output from account service.
+
+* In Pubsub repo.
+    1. check the application.xml, it support the consumer group and partition. Without partition, you don't know which one in the group will handle the message.
+    2. One message from order will be consumed by both account and product service.
+
+    3. Both service will send back the message to order.
+
+```
+-Dspring.profiles.active=zone1 
+```
+
+##  Docker
+
+1. Common command
+```
+docker rmi $(docker images -q -f dangling=true)   ----Remove all the dangling images.
+
+docker rm -f containerName
+
+mvn package -DskipTests
+
+docker build -t archerfrank/order-service:1.0 .
+docker build -t archerfrank/customer-service:1.0 .
+docker build -t archerfrank/account-service:1.1 .
+docker build -t archerfrank/product-service:1.0 .
+docker build -t archerfrank/discovery-service:1.0 .
+docker login --username=archerfrank
+docker push archerfrank/discovery-service:1.0
+docker push archerfrank/account-service:1.1
+docker push archerfrank/product-service:1.0
+docker push archerfrank/customer-service:1.0
+```
+
+2. To run the containers
+```
+docker network create sample-cloud
+
+docker run -d --rm --name account -p 8091:8091 -e EUREKA_DEFAULT_ZONE=http://discovery:8761/eureka -m 256M  --network sample-cloud archerfrank/account-service:1.0
+
+docker run -d --rm --name customer -p 8092:8092 -e EUREKA_DEFAULT_ZONE=http://discovery:8761/eureka -m 256M --network sample-cloud archerfrank/customer-service:1.0
+
+docker run -d --rm --name order -p 8090:8090 -e EUREKA_DEFAULT_ZONE=http://discovery:8761/eureka -m 256M --network sample-cloud archerfrank/order-service:1.0
+
+docker run -d --rm --name product -p 8093:8093 -e EUREKA_DEFAULT_ZONE=http://discovery:8761/eureka -m 256M --network sample-cloud archerfrank/product-service:1.0
+
+docker run -d --rm --name discovery -p 8761:8761 --network sample-cloud archerfrank/discovery-service:1.0
+```
+3. Visit http://192.168.99.100:8761
+
+ * Visit http://192.168.99.100:8092/withAccounts/1
+
+```
+docker stats --format "table {{.Name}}\t{{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}"
+```
+
+4. Build with Maven
+
+Go into each folder, you could run this command.
+
+```
+mvn clean install docker:build -DskipTests
+
+```
+
+# Jenkins
+
+
+# Kubernate
+
+1. install minikube https://yq.aliyun.com/articles/221687 or https://blog.csdn.net/yyqq188/article/details/88019467 
+
+* Start the minikube
+
+        ```
+        minikube start
+        minikube start --registry-mirror=https://docker.mirrors.ustc.edu.cn
+        minikube dashboard
+        minikube ip
+        minikube stop
+
+        kubectl version
+        kubectl get nodes
+        kubectl cluster-info
+        ```
+
+2. Run the applications in the minikube.
+
+* Run single application
+
+    ```
+    kubectl run discovery --image=archerfrank/discovery-service:1.0 --port=8761
+    kubectl get pods -o wide
+    ```
+* Useful command
+    * create deployment to deploy account and customer and discovery.
+    * check the logs.
+    * pull the image, if it is to slow.
+    * Use IP to get the cloud service, instead of the DNS name.
+
+    ```
+    kubectl get svc 
+    kubectl logs account-service-6465c6dc6d-2597l
+    kubectl logs customer-service-5f769dc486-jxgj6
+    kubectl exec customer-service-5f769dc486-slrb4 -c customer-service -- curl http://172.17.0.2:8091/customer/1
+    kubectl delete pod discovery-56cc6f84f5-rfbdq
+    kubectl describe pod discovery-56cc6f84f5-rfbdq
+    kubectl expose deployment discovery --type=NodePort
+
+    kubectl apply -f discovery.yaml
+    kubectl apply -f nodeport.yaml
+    kubectl apply -f product.yaml
+    kubectl apply -f account-service.yaml
+    kubectl port-forward account-service-6465c6dc6d-2597l 8091:8091
+    kubectl port-forward customer-service-5f769dc486-jxgj6 8092:8092
+
+    kubectl delete deployment account-service
+    kubectl delete pod customer-service-5f769dc486-slrb4
+    docker pull archerfrank/product-service:1.0
+    docker pull archerfrank/account-service:1.1      1.1 version is the preferIpAddress Version.
+
+    curl http://10.100.247.206:8091/customer/1
+    curl http://account-service:8091/customer/1
+
+    kubectl apply -f account.yaml
+    kubectl apply -f customer.yaml
+    ```
+
+3. Visit http://192.168.99.101:32000/ to find the discovery service.
+
+4. After port forward, visit http://127.0.0.1:8091/1, http://127.0.0.1:8092/withAccounts/1 or we could create a nodeport service. **Caution**, the port forward is very slow.
+
+        ```
+        kubectl apply -f nodeport-customer.yaml
+        ```
+Then visit http://192.168.99.100:32001/withAccounts/1.
+
+5.  Use ingress servcie as gateway.
+
+    ```
+    kubectl get pods -o wide
+    kubectl get svc 
+    minikube addons list
+    minikube addons enable ingress
+    kubectl apply -f gateway.yaml
+    kubectl get endpoints
+    kubectl get ing
+    kubectl get pods -n kube-system
+
+    kubectl describe ing  gateway-ingress
+
+    ```
+    * Adjust the memory to 3.5 GB for the virtual machine and visit http://archerfrank.com/customer/withAccounts/1. 
+    
+    * Please also check https://github.com/kubernetes/ingress-nginx/blob/master/docs/examples/rewrite/README.md , the rewrite logic.
+
 

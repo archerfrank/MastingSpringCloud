@@ -1,0 +1,19 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: gateway-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  rules:
+  - host: archerfrank.com
+    http:
+      paths:
+      - path: /customer(/|$)(.*)
+        backend:
+          serviceName: customer-service
+          servicePort: 8092
+      - path: /account(/|$)(.*)
+        backend:
+          serviceName: account-service
+          servicePort: 8091
